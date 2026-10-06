@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Painel UX WhatsApp Goiás</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: barra lateral em tinta escura (navegação por eixo da pesquisa) + área de papel com cartões; no celular a barra vira faixa de abas no topo. Paleta do "Modelo Cores" (tinta, papel, selo, confiança, alerta). */
+:root{
+  --bg:#EFE9DC; --surface:#F8F5EC; --surface-2:#E2DAC5; --fg:#14282A; --fg-soft:#4B5450; --line:rgba(20,40,42,.14);
+  --seal:#B3862F; --seal-text:#7E5C1C; --trust:#2F6B63; --trust-light:#5C9089; --alert:#9B4A3D; --alert-light:#C97E70; --neutral:#CFC6AE;
+  --side:#14282A; --side-2:#1D3336; --side-fg:#EFE9DC; --side-soft:rgba(239,233,220,.62); --side-accent:#D6AE5C;
+  --ok-bg:rgba(47,107,99,.12); --warn-bg:rgba(179,134,47,.14); --bad-bg:rgba(155,74,61,.12);
+  --serif:'Source Serif 4', Georgia, 'Times New Roman', serif; --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14282A; --surface:#1D3336; --surface-2:#284245; --fg:#EFE9DC; --fg-soft:#B7B6AA; --line:rgba(239,233,220,.16);
+  --seal:#D6AE5C; --seal-text:#D6AE5C; --trust:#7FAE83; --trust-light:#5C9089; --alert:#C97E70; --alert-light:#9B6A5F; --neutral:#4D6162;
+  --side:#0E1E20; --side-2:#1D3336; --ok-bg:rgba(127,174,131,.14); --warn-bg:rgba(214,174,92,.14); --bad-bg:rgba(201,126,112,.15); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#14282A; --surface:#1D3336; --surface-2:#284245; --fg:#EFE9DC; --fg-soft:#B7B6AA; --line:rgba(239,233,220,.16);
+  --seal:#D6AE5C; --seal-text:#D6AE5C; --trust:#7FAE83; --trust-light:#5C9089; --alert:#C97E70; --alert-light:#9B6A5F; --neutral:#4D6162;
+  --side:#0E1E20; --side-2:#1D3336; --ok-bg:rgba(127,174,131,.14); --warn-bg:rgba(214,174,92,.14); --bad-bg:rgba(201,126,112,.15); color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+h1,h2,h3{font-family:var(--serif);margin:0;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);color:var(--side-fg);padding:24px 16px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:22px}
+.brand .org{font-size:12px;font-weight:600;color:var(--side-accent)}
+.brand h1{font-size:19px;line-height:1.2;color:var(--side-fg);margin-top:4px}
+.brand p{font-size:12px;color:var(--side-soft);margin-top:6px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:3px;font-size:13.5px;font-weight:500;color:var(--side-soft)}
+.nav button:hover{background:var(--side-2);color:var(--side-fg)}
+.nav button[aria-current="true"]{background:var(--side-2);color:var(--side-fg);box-shadow:inset 3px 0 0 var(--side-accent)}
+.nav .num{font-family:var(--serif);font-size:12px;color:var(--side-accent);width:14px}
+.side-foot{margin-top:auto;font-size:11.5px;color:var(--side-soft);border-top:1px solid rgba(239,233,220,.14);padding-top:14px}
+
+.main{min-width:0;padding:0 28px 48px}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 20px}
+.topbar .t{min-width:0;flex:1 1 300px}
+.kicker{font-size:12px;font-weight:600;color:var(--seal-text);letter-spacing:.02em}
+.topbar h2{font-size:24px;line-height:1.2;margin-top:2px}
+.src{font-size:12px;color:var(--fg-soft);margin-top:4px}
+.filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:11px;font-weight:600;color:var(--fg-soft)}
+.field input{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:13px}
+.btn{cursor:pointer;border:1px solid var(--fg);background:transparent;border-radius:3px;padding:7px 14px;font-size:13px;font-weight:600}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn.primary:hover{opacity:.9}
+.btn.seal{background:var(--seal);border-color:var(--seal);color:#14282A}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.view{display:flex;flex-direction:column;gap:22px;padding-top:22px}
+.view[hidden]{display:none!important}
+.lead{font-size:15px;color:var(--fg-soft);max-width:68ch}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:20px 22px;min-width:0}
+.card h3{font-size:17px;margin-bottom:4px}
+.card .sub{font-size:12.5px;color:var(--fg-soft);margin-bottom:16px;max-width:70ch}
+.sec-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-title h3{font-size:20px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.kpi{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:12px;color:var(--fg-soft);font-weight:500}
+.kpi .v{font-family:var(--serif);font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:11.5px;color:var(--fg-soft)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--trust);border-color:transparent}
+.pill.warn{background:var(--warn-bg);color:var(--seal-text);border-color:transparent}
+.pill.bad{background:var(--bad-bg);color:var(--alert);border-color:transparent}
+
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.ins{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--seal);padding:14px 16px;border-radius:2px;display:flex;flex-direction:column;gap:6px}
+.ins.ok{border-left-color:var(--trust)} .ins.bad{border-left-color:var(--alert)}
+.ins .h{font-family:var(--serif);font-size:16px;font-weight:600;line-height:1.3}
+.ins .b{font-size:13px;color:var(--fg-soft)}
+
+/* barras horizontais */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(110px,34%) minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
+.bar .lab{min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.bar .trk{height:14px;background:var(--surface-2);border-radius:2px;position:relative}
+.bar .fill{position:absolute;inset:0 auto 0 0;border-radius:2px;background:var(--trust)}
+.bar .ci{position:absolute;top:50%;height:2px;background:var(--fg);opacity:.55}
+.bar .ci::before,.bar .ci::after{content:'';position:absolute;top:-4px;width:1.5px;height:10px;background:var(--fg)}
+.bar .ci::before{left:0}.bar .ci::after{right:0}
+.bar .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar .val small{display:block;font-weight:400;color:var(--fg-soft);font-size:11px}
+
+/* likert */
+.lk{display:flex;flex-direction:column;gap:9px}
+.lk-row{display:grid;grid-template-columns:minmax(150px,30%) minmax(0,1fr) 56px 46px;gap:10px;align-items:center;font-size:13px}
+.lk-row .lab small{display:block;color:var(--fg-soft);font-size:11px}
+.lk-bar{display:flex;height:20px;border-radius:2px;overflow:hidden;background:var(--surface-2)}
+.lk-bar span{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;color:#fff;min-width:0;overflow:hidden}
+.s1{background:var(--alert)} .s2{background:var(--alert-light)} .s3{background:var(--neutral);color:var(--fg)!important} .s4{background:var(--trust-light)} .s5{background:var(--trust)}
+.lk-row .m{font-family:var(--serif);font-weight:700;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
+.lk-row .n{font-size:11.5px;color:var(--fg-soft);text-align:right}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--fg-soft);margin-top:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:420px}
+.chart text{fill:var(--fg-soft);font-family:var(--sans);font-size:11px}
+.chart .axis{stroke:var(--line)}
+
+/* matriz */
+.matrix{overflow-x:auto}
+.matrix table{border-collapse:collapse;font-size:12px;min-width:560px;width:100%}
+.matrix th{font-weight:600;color:var(--fg-soft);text-align:left;padding:6px 6px;vertical-align:bottom}
+.matrix th.rot{writing-mode:vertical-rl;transform:rotate(180deg);height:150px;white-space:normal;max-width:34px;font-size:11px;text-align:left}
+.matrix td{padding:3px;text-align:center}
+.matrix td.p{text-align:left;font-weight:600;white-space:nowrap;padding-right:10px}
+.cell{width:100%;min-width:24px;height:24px;border-radius:2px;background:var(--surface-2)}
+.cell.on{background:var(--seal)}
+.matrix tfoot td{font-weight:700;font-variant-numeric:tabular-nums;padding-top:8px}
+
+table.data{border-collapse:collapse;width:100%;font-size:13px}
+table.data th{font-size:11px;font-weight:600;color:var(--fg-soft);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line)}
+table.data td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
+table.data td.r,table.data th.r{text-align:right}
+.tbl{overflow-x:auto}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{cursor:pointer;border:1px solid var(--fg);border-radius:20px;padding:5px 13px;font-size:12.5px;font-weight:500;background:transparent}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:18px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.case .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.case .code{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--seal-text)}
+.case .svc{font-size:13px;font-weight:600}
+.case .meta{display:flex;flex-wrap:wrap;gap:6px}
+.case .lbl{font-size:11px;font-weight:600;color:var(--fg-soft);margin-bottom:2px}
+.case p.t{font-size:13px;line-height:1.55}
+.case .tags{display:flex;flex-wrap:wrap;gap:5px}
+.case .tags span{font-size:11px;border:1px solid var(--line);border-radius:2px;padding:1px 7px;color:var(--fg-soft)}
+
+.quotes{display:flex;flex-direction:column;gap:12px}
+.quote{font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.5;border-left:3px solid var(--seal);padding-left:14px}
+.quote small{display:block;font-family:var(--sans);font-style:normal;font-size:11.5px;color:var(--fg-soft);margin-top:3px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.pair>div{padding:12px 14px}
+.pair .de{background:var(--ok-bg)} .pair .para{background:var(--bad-bg)}
+.pair .arrow{display:flex;align-items:center;justify-content:center;color:var(--seal-text);background:var(--surface-2)}
+.pair .tag{display:block;font-size:10.5px;font-weight:600;color:var(--fg-soft);margin-bottom:4px}
+.pair p{font-family:var(--serif);font-size:15px}
+
+.note{font-size:12.5px;color:var(--fg-soft);background:var(--warn-bg);border-radius:3px;padding:10px 14px}
+.empty{padding:40px 22px;text-align:center;color:var(--fg-soft)}
+.empty h3{color:var(--fg);font-size:20px;margin-bottom:8px}
+.refs{font-size:12.5px;color:var(--fg-soft);display:flex;flex-direction:column;gap:6px;padding-left:18px;margin:0}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(10,20,22,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);color:var(--fg);border-radius:4px;max-width:520px;width:100%;padding:24px 24px 20px;display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow:auto;border-top:4px solid var(--seal)}
+.modal h3{font-size:20px}
+.modal input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:9px 10px;font-size:14px}
+.modal .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.msg{font-size:13px;min-height:1.2em}
+.msg.err{color:var(--alert)} .msg.ok{color:var(--trust)}
+.drop{border:1.5px dashed var(--seal);border-radius:3px;padding:22px;text-align:center;font-size:13px;color:var(--fg-soft);cursor:pointer;background:var(--warn-bg)}
+.drop.over{background:var(--surface-2)}
+.toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:3px;font-size:13px;z-index:60}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;padding:14px 16px;gap:12px}
+  .side-foot,.brand p{display:none}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .nav button{white-space:nowrap;padding:7px 10px}
+  .nav button[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--side-accent)}
+  .main{padding:0 16px 40px}
+  .g2,.g3{grid-template-columns:minmax(0,1fr)}
+  .topbar{position:static}
+}
+@media (max-width:560px){
+  .bar{grid-template-columns:1fr 64px}
+  .bar .trk{grid-column:1/-1;grid-row:2}
+  .lk-row{grid-template-columns:1fr 46px 40px}
+  .lk-row .lk-bar{grid-column:1/-1;grid-row:2}
+  .pair{grid-template-columns:1fr}
+  .pair .arrow{height:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <p class="org">Governo de Goiás · GEEU / SCTP / SEAD-GO</p>
+      <h1>Pesquisa UX do Canal WhatsApp</h1>
+      <p>WhatsApp do Estado de Goiás · (62) 3201-8700</p>
+    </div>
+    <nav class="nav" id="nav" aria-label="Seções do painel">
+      <button data-v="visao"><span class="num">1</span>Visão geral</button>
+      <button data-v="jornada"><span class="num">2</span>Jornada (questionário)</button>
+      <button data-v="perfil"><span class="num">3</span>Perfil dos abordados</button>
+      <button data-v="relatos"><span class="num">4</span>Entrevistas</button>
+      <button data-v="vozes"><span class="num">5</span>Vozes dos usuários</button>
+      <button data-v="base"><span class="num">6</span>Base e método</button>
+    </nav>
+    <div class="side-foot" id="sideFoot">Aguardando a base de dados.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="t">
+        <p class="kicker" id="kick">Painel de gestão das pesquisas de experiência do usuário</p>
+        <h2 id="viewTitle">Visão geral</h2>
+        <p class="src" id="srcLine">Carregando a base…</p>
+      </div>
+      <div class="filters">
+        <div class="field"><label for="dIni">Data inicial</label><input type="date" id="dIni"></div>
+        <div class="field"><label for="dFim">Data final</label><input type="date" id="dFim"></div>
+        <button class="btn" id="btnLimpar" type="button">Toda a coleta</button>
+        <button class="btn seal" id="btnUpload" type="button">Atualizar base</button>
+      </div>
+    </div>
+
+    <section class="view" id="v-visao"></section>
+    <section class="view" id="v-jornada" hidden></section>
+    <section class="view" id="v-perfil" hidden></section>
+    <section class="view" id="v-relatos" hidden></section>
+    <section class="view" id="v-vozes" hidden></section>
+    <section class="view" id="v-base" hidden></section>
+  </main>
+</div>
+
+<div class="modal-bg" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle">Atualizar a base</h3>
+    <div id="mBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* Converte a planilha-base (workbook SheetJS) no modelo de dados do painel. */
+function parseBase(XLSX, wb){
+  const need = ['QUANTI_JORNADA','TRIAGEM','QUALI_ENTREVISTAS'];
+  const faltando = need.filter(n => !wb.Sheets[n]);
+  if (faltando.length) throw new Error('A planilha não tem as abas: ' + faltando.join(', ') + '. Use o modelo "Base e Painel - Pesquisa UX WhatsApp".');
+  const rows = n => XLSX.utils.sheet_to_json(wb.Sheets[n], {header:1, raw:true, defval:null, blankrows:false});
+  const txt = v => { if (v === null || v === undefined) return null; const s = String(v).trim(); return s === '' ? null : s; };
+  const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(String(v).replace(',', '.')); return Number.isFinite(n) ? n : null; };
+  const nota = v => { const n = num(v); return n !== null && n >= 1 && n <= 5 ? Math.round(n) : null; };
+  const pad = n => String(n).padStart(2, '0');
+  const dt = v => {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+    if (v instanceof Date) return v.getFullYear() + '-' + pad(v.getMonth() + 1) + '-' + pad(v.getDate());
+    const s = String(v).trim();
+    let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return m[3] + '-' + pad(m[2]) + '-' + pad(m[1]);
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return m[1] + '-' + m[2] + '-' + m[3];
+    return null;
+  };
+  const sheet = (n) => {
+    const r = rows(n); const h = (r[0] || []).map(x => txt(x) || '');
+    const col = (pref) => { const i = h.findIndex(x => x.toLowerCase().startsWith(pref.toLowerCase())); return i; };
+    return {h, body: r.slice(1), col};
+  };
+
+  // QUANTI
+  const Q = sheet('QUANTI_JORNADA');
+  const qi = {id: Q.col('ID'), data: Q.col('Data'), usou: Q.col('Q1 '), soube: Q.col('Q2 '), q3: Q.col('Q3 '), q4: Q.col('Q4 '), q5: Q.col('Q5 '), q6: Q.col('Q6 '),
+    servico: Q.col('Q7 '), q8: Q.col('Q8 '), q9: Q.col('Q9 Dificuldade'), q10: Q.col('Q10 '), q11: Q.col('Q11 '), q12: Q.col('Q12 '), q13: Q.col('Q13 '), q14: Q.col('Q14 '), dif: Q.col('Q9 Teve')};
+  if (qi.usou < 0 || qi.q12 < 0) throw new Error('A aba QUANTI_JORNADA não tem as colunas esperadas (Q1 e Q12).');
+  const g = (r, i) => i < 0 ? null : r[i];
+  const quanti = Q.body.filter(r => txt(g(r, qi.usou))).map(r => ({
+    id: txt(g(r, qi.id)), data: dt(g(r, qi.data)), usou: txt(g(r, qi.usou)), soube: txt(g(r, qi.soube)),
+    q3: nota(g(r, qi.q3)), q4: nota(g(r, qi.q4)), q5: nota(g(r, qi.q5)), q6: nota(g(r, qi.q6)), servico: txt(g(r, qi.servico)),
+    q8: nota(g(r, qi.q8)), q9: txt(g(r, qi.q9)), q10: nota(g(r, qi.q10)), q11: nota(g(r, qi.q11)), q12: nota(g(r, qi.q12)),
+    q13: txt(g(r, qi.q13)), q14: txt(g(r, qi.q14)), dif: txt(g(r, qi.dif))
+  }));
+
+  // TRIAGEM
+  const T = sheet('TRIAGEM');
+  const ti = {id: T.col('ID'), data: T.col('Data'), usou: T.col('Usou'), genero: T.col('Gênero'), faixa: T.col('Faixa')};
+  const triagem = T.body.filter(r => txt(g(r, ti.usou))).map(r => ({
+    id: txt(g(r, ti.id)), data: dt(g(r, ti.data)), usou: txt(g(r, ti.usou)), genero: txt(g(r, ti.genero)), faixa: txt(g(r, ti.faixa))
+  }));
+
+  // QUALI (sem gravação, transcrição e nome de arquivo: não são necessários ao painel)
+  const E = sheet('QUALI_ENTREVISTAS');
+  const ei = {p: E.col('Participante'), data: E.col('Data'), genero: E.col('Gênero'), faixa: E.col('Faixa'), servico: E.col('Serviço relatado'), categoria: E.col('Categoria'),
+    descoberta: E.col('Descoberta'), encontrar: E.col('Encontrar o serviço'), realizar: E.col('Realizar o serviço'), resposta: E.col('Resposta recebida'), resolveu: E.col('Resolveu'),
+    presencial: E.col('Precisou ir'), humano: E.col('Pediu atendimento'), melhoria: E.col('Melhoria'), sintese: E.col('Síntese'), sinais: E.col('Sinais'), qualidade: E.col('Qualidade'), status: E.col('Status')};
+  const temaCols = E.h.map((x, i) => [x, i]).filter(([x]) => /^tema:/i.test(x)).map(([x, i]) => [x.replace(/^tema:\s*/i, '').trim(), i]);
+  const quali = E.body.filter(r => txt(g(r, ei.p))).map(r => {
+    const o = {}; for (const k in ei) o[k] = k === 'data' ? dt(g(r, ei.data)) : txt(g(r, ei[k]));
+    o.temas = temaCols.filter(([, i]) => (txt(r[i]) || '').toLowerCase() === 'sim').map(([n]) => n);
+    return o;
+  });
+  return {quanti, triagem, quali, temas: temaCols.map(([n]) => n)};
+}
+
+</script>
+<script>
+(function(){
+/* Repositório GitHub que guarda a base (data.json), o histórico e o token cifrado (config.json). */
+const REPO = (() => {
+  const host = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i), seg = location.pathname.split('/').filter(Boolean)[0];
+  return host && seg ? {owner: host[1], name: seg} : {owner: 'oliverher', name: 'painel-ux-whatsapp'};
+})();
+const API = `https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/`;
+let BASE = null, ESTADO = 'carregando', LOCAL = false, HIST = [], CONFIG = null;
+let filtro = {ini:'', fim:''};
+let temaSel = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (n, d=1) => n === null || n === undefined || Number.isNaN(n) ? '–' : n.toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d});
+const int = n => (n ?? 0).toLocaleString('pt-BR');
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
+const dBR = s => s ? s.slice(8,10) + '/' + s.slice(5,7) + '/' + s.slice(0,4) : '–';
+const dCurto = s => s ? s.slice(8,10) + '/' + s.slice(5,7) : '';
+const mean = a => { const v = a.filter(x => x !== null && x !== undefined); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : null; };
+const count = (arr, f) => arr.reduce((m, r) => { const k = f(r) ?? 'Não informado'; m[k] = (m[k]||0) + 1; return m; }, {});
+const sortObj = (o, order) => Object.entries(o).sort(order ? (a,b) => order.indexOf(a[0]) - order.indexOf(b[0]) : (a,b) => b[1]-a[1]);
+function wilson(k, n, z=1.96){ if(!n) return [0,0]; const p=k/n, d=1+z*z/n, c=p+z*z/(2*n), m=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n)); return [Math.max(0,(c-m)/d), Math.min(1,(c+m)/d)]; }
+function inRange(d){ if(!filtro.ini && !filtro.fim) return true; if(!d) return false; if(filtro.ini && d < filtro.ini) return false; if(filtro.fim && d > filtro.fim) return false; return true; }
+function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,3500); }
+
+const ETAPAS = [
+  ['q3','Descoberta','Q3 Confiança no canal'],
+  ['q4','Acesso','Q4 Acessar e iniciar'],
+  ['q5','Escolha','Q5 Encontrar a opção'],
+  ['q6','Escolha','Q6 Informações ajudaram'],
+  ['q8','Solicitação','Q8 Realizar o serviço'],
+  ['q10','Resposta','Q10 Resposta x expectativa'],
+  ['q11','Resposta','Q11 Clareza do resultado'],
+  ['q12','Conclusão','Q12 Avaliação geral']
+];
+const FAIXAS = ['Menor de 18','18 a 24 anos','25 a 34 anos','35 a 44 anos','45 a 54 anos','55 a 64 anos','65 anos ou mais'];
+const POS = ['Fácil','Clara','Positiva','Sim'];
+const NEG = ['Com dificuldade','Fácil, com fricção','Não realizou','Insatisfatória','Sem resposta','Parcialmente','Não'];
+
+/* ---------- dados filtrados ---------- */
+function D(){
+  const q = BASE.quanti.filter(r => inRange(r.data));
+  const t = BASE.triagem.filter(r => inRange(r.data));
+  const e = BASE.quali.filter(r => inRange(r.data));
+  const u = q.filter(r => r.usou === 'Sim');
+  return {q, t, e, u, temas: BASE.temas || []};
+}
+
+/* ---------- componentes ---------- */
+function bars(rows, opt={}){
+  const max = opt.max ?? Math.max(1, ...rows.map(r => r.v));
+  return '<div class="bars">' + rows.map(r => {
+    const w = Math.max(0, r.v / max * 100);
+    const ci = r.ci ? `<span class="ci" style="left:${r.ci[0]*100}%;width:${Math.max(.5,(r.ci[1]-r.ci[0])*100)}%"></span>` : '';
+    return `<div class="bar"><div class="lab">${esc(r.l)}</div><div class="trk"><span class="fill" style="width:${w}%;background:${r.c||'var(--trust)'}"></span>${ci}</div><div class="val">${r.t ?? int(r.v)}${r.s ? `<small>${r.s}</small>` : ''}</div></div>`;
+  }).join('') + '</div>';
+}
+function likertRows(u){
+  return ETAPAS.map(([k, et, lab]) => {
+    const v = u.map(r => r[k]).filter(x => x); const n = v.length;
+    const c = [1,2,3,4,5].map(s => v.filter(x => x === s).length);
+    const seg = c.map((x,i) => x ? `<span class="s${i+1}" style="width:${x/n*100}%" title="Nota ${i+1}: ${x} de ${n}">${x/n >= .1 ? Math.round(x/n*100)+'%' : ''}</span>` : '').join('');
+    return `<div class="lk-row"><div class="lab">${esc(lab)}<small>${esc(et)}</small></div><div class="lk-bar" role="img" aria-label="${esc(lab)}: distribuição das notas ${c.join(', ')}">${n ? seg : ''}</div><div class="m">${fmt(mean(v))}</div><div class="n">n=${n}</div></div>`;
+  }).join('');
+}
+const LEG = '<div class="legend"><span><i class="s1"></i>1</span><span><i class="s2"></i>2</span><span><i class="s3"></i>3</span><span><i class="s4"></i>4</span><span><i class="s5"></i>5 (melhor)</span><span>Número à direita: média da etapa</span></div>';
+
+function curvaJornada(u){
+  const pts = ETAPAS.map(([k,et,lab]) => ({lab: lab.split(' ')[0], et, m: mean(u.map(r => r[k]))}));
+  const W=760,H=230,L=40,R=40,T=18,B=48, x = i => L + i*(W-L-R)/(pts.length-1), y = v => T + (5-v)/4*(H-T-B);
+  let g = '';
+  [1,2,3,4,5].forEach(v => g += `<line class="axis" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke-dasharray="${v===3?'0':'3 4'}"/><text x="${L-10}" y="${y(v)+4}" text-anchor="end">${v}</text>`);
+  const valid = pts.map((p,i)=>[p,i]).filter(([p])=>p.m!==null);
+  const path = valid.map(([p,i],j) => (j?'L':'M') + x(i) + ' ' + y(p.m)).join(' ');
+  const minM = Math.min(...valid.map(([p])=>p.m));
+  g += `<path d="${path}" fill="none" stroke="var(--trust)" stroke-width="2.5"/>`;
+  valid.forEach(([p,i]) => { const low = p.m === minM; g += `<circle cx="${x(i)}" cy="${y(p.m)}" r="${low?6:4.5}" fill="${low?'var(--alert)':'var(--trust)'}" stroke="var(--surface)" stroke-width="2"/><text x="${x(i)}" y="${y(p.m)-11}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${fmt(p.m)}</text>`; });
+  pts.forEach((p,i) => g += `<text x="${x(i)}" y="${H-B+20}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${p.lab}</text><text x="${x(i)}" y="${H-B+34}" text-anchor="middle">${p.et}</text>`);
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Curva da jornada: nota média por etapa">${g}</svg></div>`;
+}
+
+function coletaChart(d){
+  const dias = {};
+  const add = (arr, k) => arr.forEach(r => { if(!r.data) return; dias[r.data] = dias[r.data] || {q:0,t:0,e:0}; dias[r.data][k]++; });
+  add(d.q,'q'); add(d.t,'t'); add(d.e,'e');
+  const ks = Object.keys(dias).sort(); if(!ks.length) return '<p class="sub">Sem registros no período.</p>';
+  const max = Math.max(...ks.map(k => dias[k].q + dias[k].t + dias[k].e));
+  const W = Math.max(420, ks.length*46+60), H=220, L=36, B=36, T=16, bw = Math.min(30, (W-L-10)/ks.length*.62);
+  const y = v => T + (1 - v/max)*(H-T-B), step=(W-L-10)/ks.length;
+  let g = '';
+  const ticks = [0, Math.round(max/2), max];
+  ticks.forEach(v => g += `<line class="axis" x1="${L}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${int(v)}</text>`);
+  ks.forEach((k,i) => {
+    const cx = L + step*i + step/2; let acc = 0; const o = dias[k];
+    [['q','var(--trust)'],['t','var(--seal)'],['e','var(--alert)']].forEach(([s,c]) => { if(!o[s]) return; const y0=y(acc), y1=y(acc+o[s]); g += `<rect x="${cx-bw/2}" y="${y1}" width="${bw}" height="${Math.max(1,y0-y1)}" fill="${c}"><title>${dBR(k)} · ${s==='q'?'Questionário':s==='t'?'Triagem':'Entrevistas'}: ${o[s]}</title></rect>`; acc += o[s]; });
+    g += `<text x="${cx}" y="${y(acc)-5}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${acc}</text><text x="${cx}" y="${H-B+16}" text-anchor="middle">${dCurto(k)}</text>`;
+  });
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Registros coletados por dia">${g}</svg></div><div class="legend"><span><i style="background:var(--trust)"></i>Questionário</span><span><i style="background:var(--seal)"></i>Triagem</span><span><i style="background:var(--alert)"></i>Entrevistas</span></div>`;
+}
+
+function kpis(items){ return '<div class="kpis">' + items.map(([l,v,d]) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span>${d?`<span class="d">${d}</span>`:''}</div>`).join('') + '</div>'; }
+const amostraNota = n => n < 30 ? `<p class="note">Amostra pequena (n=${n}). Leia os números como descrição do grupo pesquisado, sem generalizar para toda a população de usuários do canal.</p>` : '';
+function journeyClass(v){ if(!v || v==='Sem evidência') return 'se'; if(POS.includes(v)) return 'pos'; if(NEG.includes(v)) return 'neg'; return 'se'; }
+
+/* ---------- insights calculados ---------- */
+function insights(d){
+  const out = [];
+  const N = d.q.length + d.t.length, U = d.q.filter(r=>r.usou==='Sim').length + d.t.filter(r=>r.usou==='Sim').length;
+  if (N){ const [a,b] = wilson(U,N); out.push({c:'warn', h:`${pct(U,N)} dos abordados usaram o canal`, b:`${int(U)} de ${int(N)} pessoas (questionário + triagem). IC 95% de Wilson: ${Math.round(a*100)}% a ${Math.round(b*100)}%. A maior parte do público abordado ainda não conhece ou não usa o WhatsApp do Estado.`}); }
+  const etapas = ETAPAS.filter(e=>e[0]!=='q12').map(([k,et,lab]) => ({lab, et, m: mean(d.u.map(r=>r[k])), n: d.u.filter(r=>r[k]).length})).filter(e=>e.m!==null);
+  if (etapas.length){ const w = etapas.reduce((a,b)=> b.m < a.m ? b : a); out.push({c:'bad', h:`Maior atrito: ${w.lab.replace(/^Q\d+ /,'')}`, b:`Etapa "${w.et}" tem a menor nota média da jornada (${fmt(w.m)} de 5; n=${w.n}).`}); }
+  const q12 = d.u.map(r=>r.q12).filter(x=>x); if (q12.length){ const s = q12.filter(x=>x>=4).length; out.push({c: s/q12.length>=.7?'ok':'warn', h:`${pct(s,q12.length)} avaliam bem o canal`, b:`${s} de ${q12.length} usuários deram nota 4 ou 5 na avaliação geral (Q12).`}); }
+  const dis = d.u.filter(r => r.q12 >= 4 && ['q4','q5','q6','q8','q10','q11'].some(k => r[k] && r[k] <= 2));
+  if (d.u.length) out.push({c: dis.length ? 'warn':'ok', h: dis.length ? `${dis.length} avaliação(ões) geral alta com etapa ruim` : 'Avaliação geral coerente com as etapas', b: dis.length ? 'Nota geral 4–5 convivendo com nota 1–2 em alguma etapa. Revise esses casos na aba Jornada antes de usar a Q12 sozinha como indicador.' : 'Nenhum usuário deu nota geral alta tendo nota 1–2 em alguma etapa.'});
+  if (d.e.length){
+    const tc = {}; d.e.forEach(r => (r.temas||[]).forEach(t => tc[t]=(tc[t]||0)+1));
+    const top = Object.entries(tc).sort((a,b)=>b[1]-a[1])[0];
+    if (top) out.push({c:'warn', h:`Tema mais recorrente: ${top[0]}`, b:`Aparece em ${top[1]} de ${d.e.length} entrevistas (codificação preliminar).`});
+    const res = d.e.filter(r=>r.resolveu==='Sim').length; out.push({c: res/d.e.length>=.6?'ok':'bad', h:`${res} de ${d.e.length} entrevistados resolveram tudo pelo canal`, b:`Parcialmente: ${d.e.filter(r=>r.resolveu==='Parcialmente').length} · Não: ${d.e.filter(r=>r.resolveu==='Não').length} · Sem evidência: ${d.e.filter(r=>!r.resolveu||r.resolveu==='Sem evidência').length}.`});
+    const val = d.e.filter(r => /^validado/i.test(r.status||'')).length;
+    if (val < d.e.length) out.push({c:'bad', h:`${d.e.length - val} relato(s) aguardando validação`, b:'A codificação dos temas é preliminar até a pesquisadora validar cada relato.'});
+  }
+  return '<div class="insights">' + out.map(i => `<div class="ins ${i.c}"><span class="h">${esc(i.h)}</span><span class="b">${esc(i.b)}</span></div>`).join('') + '</div>';
+}
+
+/* ---------- views ---------- */
+function vVisao(d){
+  const N = d.q.length + d.t.length, U = d.q.filter(r=>r.usou==='Sim').length + d.t.filter(r=>r.usou==='Sim').length;
+  const val = d.e.filter(r => /^validado/i.test(r.status||'')).length;
+  const fontes = [['Questionário da jornada', d.q], ['Triagem para entrevista', d.t], ['Entrevistas em profundidade', d.e]];
+  // triangulação descoberta
+  const desc = {}; d.u.forEach(r => { const k=r.soube||'Não informado'; desc[k]=desc[k]||{q:0,e:0}; desc[k].q++; });
+  d.e.forEach(r => { const k=r.descoberta||'Sem evidência'; if(k==='Sem evidência') return; desc[k]=desc[k]||{q:0,e:0}; desc[k].e++; });
+  const descRows = Object.entries(desc).sort((a,b)=>(b[1].q+b[1].e)-(a[1].q+a[1].e));
+  const qDif = d.u.filter(r=>r.dif==='Sim').length, qDifN = d.u.filter(r=>r.dif).length;
+  const eFr = d.e.filter(r => ['encontrar','realizar','resposta'].some(k => journeyClass(r[k])==='neg')).length;
+  return `
+  ${kpis([
+    ['Pessoas abordadas', int(N), 'questionário + triagem'],
+    ['Usuários do canal', int(U), `${pct(U,N)} dos abordados`],
+    ['Avaliaram a jornada', int(d.u.length), 'usuários no questionário'],
+    ['Entrevistas', int(d.e.length), `${val} validada(s)`],
+    ['Avaliação geral média', fmt(mean(d.u.map(r=>r.q12))), 'Q12, escala de 1 a 5']
+  ])}
+  <div class="sec-title"><h3>O que os dados mostram</h3><span class="pill warn">Calculado automaticamente a cada atualização</span></div>
+  ${insights(d)}
+  <div class="grid g2">
+    <div class="card"><h3>Ritmo da coleta</h3><p class="sub">Registros por dia em cada instrumento.</p>${coletaChart(d)}</div>
+    <div class="card"><h3>Fontes da pesquisa</h3><p class="sub">Cada linha do questionário e da triagem é uma pessoa abordada. As bases são anônimas e não se cruzam entre si.</p>
+      <div class="tbl"><table class="data"><thead><tr><th>Fonte</th><th class="r">Registros</th><th class="r">Usaram o canal</th><th>Período</th></tr></thead><tbody>
+      ${fontes.map(([n,a]) => { const ds=a.map(r=>r.data).filter(Boolean).sort(); const us = a===d.e ? a.length : a.filter(r=>r.usou==='Sim').length; return `<tr><td>${n}</td><td class="r">${int(a.length)}</td><td class="r">${int(us)}${a===d.e?'':' ('+pct(us,a.length)+')'}</td><td>${ds.length?dBR(ds[0])+' a '+dBR(ds[ds.length-1]):'–'}</td></tr>`; }).join('')}
+      </tbody></table></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Como as pessoas descobriram o canal</h3><p class="sub">Triangulação: questionário (Q2) e entrevistas. Relatos sem evidência ficam de fora.</p>
+      <div class="tbl"><table class="data"><thead><tr><th>Origem</th><th class="r">Questionário</th><th class="r">Entrevistas</th><th class="r">Total</th></tr></thead><tbody>
+      ${descRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${v.q}</td><td class="r">${v.e}</td><td class="r"><b>${v.q+v.e}</b></td></tr>`).join('') || '<tr><td colspan="4">Sem dados no período.</td></tr>'}
+      </tbody></table></div></div>
+    <div class="card"><h3>Dificuldade: questionário x entrevistas</h3><p class="sub">Duas fontes medindo atrito de formas diferentes. Quando convergem, o achado ganha força.</p>
+      ${bars([
+        {l:'Questionário: relataram dificuldade (Q9 codificada)', v: qDifN?qDif/qDifN*100:0, t: pct(qDif,qDifN), s:`${qDif} de ${qDifN}`, c:'var(--alert)'},
+        {l:'Entrevistas: fricção em ao menos uma etapa', v: d.e.length?eFr/d.e.length*100:0, t: pct(eFr,d.e.length), s:`${eFr} de ${d.e.length}`, c:'var(--alert)'}
+      ], {max:100})}
+    </div>
+  </div>`;
+}
+
+function vJornada(d){
+  const u = d.u; const q12 = u.map(r=>r.q12).filter(x=>x);
+  const dif = u.filter(r=>r.dif==='Sim').length, difN = u.filter(r=>r.dif).length;
+  const svc = {}; u.forEach(r => { const k=r.servico||'Não informado'; svc[k]=svc[k]||[]; svc[k].push(r); });
+  const soube = count(u, r=>r.soube);
+  const dis = u.filter(r => r.q12 >= 4 && ['q4','q5','q6','q8','q10','q11'].some(k => r[k] && r[k] <= 2));
+  const nome = k => (ETAPAS.find(e=>e[0]===k)||[])[2]||k;
+  return `
+  ${kpis([
+    ['Usuários respondentes', int(u.length), `de ${int(d.q.length)} abordados no questionário`],
+    ['Avaliação geral média', fmt(mean(q12)), 'Q12 · 1 a 5'],
+    ['Satisfeitos', pct(q12.filter(x=>x>=4).length, q12.length), 'notas 4 e 5 na Q12'],
+    ['Relataram dificuldade', pct(dif,difN), `${dif} de ${difN} (Q9 codificada)`],
+    ['Confiança média', fmt(mean(u.map(r=>r.q3))), 'Q3 · 1 a 5']
+  ])}
+  ${amostraNota(u.length)}
+  <div class="card"><h3>Curva da jornada</h3><p class="sub">Nota média em cada etapa, da descoberta à conclusão. O ponto em destaque é a etapa com menor média.</p>${u.length?curvaJornada(u):'<p class="sub">Sem respostas no período.</p>'}</div>
+  <div class="card"><h3>Distribuição das notas por etapa</h3><p class="sub">Escala ordinal: a distribuição mostra mais que a média. Vermelho são notas baixas, verde são notas altas.</p><div class="lk">${likertRows(u)}</div>${LEG}</div>
+  <div class="grid g2">
+    <div class="card"><h3>Serviço utilizado (Q7)</h3><p class="sub">Usuários por serviço e avaliação geral média de cada um.</p>
+      ${bars(Object.entries(svc).sort((a,b)=>b[1].length-a[1].length).map(([k,a]) => ({l:k, v:a.length, s:`Q12 média ${fmt(mean(a.map(r=>r.q12)))}`})))}</div>
+    <div class="card"><h3>Como soube do canal (Q2)</h3><p class="sub">Entre os usuários que responderam o questionário.</p>
+      ${bars(sortObj(soube).map(([k,v]) => ({l:k, v, s:pct(v,u.length), c:'var(--seal)'})))}</div>
+  </div>
+  <div class="card"><h3>Casos para revisar</h3><p class="sub">Avaliação geral alta (4–5) com nota 1–2 em alguma etapa. Pode indicar leitura invertida da escala, efeito de cortesia ou avaliação do canal separada do resultado do serviço.</p>
+    ${dis.length ? `<div class="tbl"><table class="data"><thead><tr><th>Resposta</th><th>Data</th><th>Serviço</th><th class="r">Q12</th><th>Etapas com nota 1–2</th><th>Dificuldade relatada (Q9)</th></tr></thead><tbody>
+    ${dis.map(r => `<tr><td>#${esc(r.id)}</td><td>${dBR(r.data)}</td><td>${esc(r.servico)}</td><td class="r"><b>${r.q12}</b></td><td>${['q4','q5','q6','q8','q10','q11'].filter(k=>r[k]&&r[k]<=2).map(k=>`<span class="pill bad">${esc(nome(k))}: ${r[k]}</span>`).join(' ')}</td><td>${esc(r.q9||'–')}</td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="sub">Nenhum caso no período.</p>'}</div>`;
+}
+
+function vPerfil(d){
+  const t = d.t;
+  const grp = (key, order) => { const o = {}; t.forEach(r => { const k=r[key]||'Não informado'; o[k]=o[k]||{n:0,u:0}; o[k].n++; if(r.usou==='Sim') o[k].u++; }); return Object.entries(o).sort(order?(a,b)=>{const ia=order.indexOf(a[0]),ib=order.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib);}:(a,b)=>b[1].n-a[1].n); };
+  const fx = grp('faixa', FAIXAS), gn = grp('genero');
+  const rateBars = rows => bars(rows.map(([k,v]) => ({l:k, v: v.n?v.u/v.n*100:0, t: pct(v.u,v.n), s:`${v.u} de ${v.n}`, ci: wilson(v.u,v.n)})), {max:100});
+  const U = t.filter(r=>r.usou==='Sim').length;
+  return `
+  ${kpis([['Abordados na triagem', int(t.length), ''], ['Usaram o canal', int(U), pct(U,t.length)+' dos abordados'], ['Faixa com maior uso', (()=>{ const c = fx.filter(([,v])=>v.n>=10).sort((a,b)=>b[1].u/b[1].n-a[1].u/a[1].n)[0]; return c?esc(c[0]):'–'; })(), 'entre faixas com 10+ abordados'], ['Não usaram', int(t.length-U), pct(t.length-U,t.length)]])}
+  <p class="lead">A triagem é a única fonte com gênero e faixa etária. A taxa de uso de cada grupo vem com o intervalo de confiança de 95% (linha fina sobre a barra). Intervalos largos ou sobrepostos indicam que a diferença entre grupos pode ser acaso.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Taxa de uso por faixa etária</h3><p class="sub">Usaram o WhatsApp do Estado ÷ abordados na faixa.</p>${rateBars(fx)}</div>
+    <div class="card"><h3>Taxa de uso por gênero</h3><p class="sub">Usaram o WhatsApp do Estado ÷ abordados no grupo.</p>${rateBars(gn)}
+      <h3 style="margin-top:22px">Composição dos abordados</h3><p class="sub">Quantas pessoas de cada faixa foram ouvidas. Ajuda a avaliar se a amostra cobre bem os públicos.</p>
+      ${bars(fx.map(([k,v]) => ({l:k, v:v.n, s:pct(v.n,t.length), c:'var(--seal)'})))}</div>
+  </div>`;
+}
+
+function vRelatos(d){
+  const e = d.e, T = d.temas;
+  const tc = T.map(t => [t, e.filter(r=>(r.temas||[]).includes(t)).length]).sort((a,b)=>b[1]-a[1]);
+  const etapasQ = [['encontrar','Encontrar o serviço'],['realizar','Realizar o serviço'],['resposta','Resposta recebida'],['resolveu','Resultado (resolveu?)']];
+  const stack = etapasQ.map(([k,l]) => { const c={pos:0,neg:0,se:0}; e.forEach(r=>c[journeyClass(r[k])]++); return {l,c}; });
+  const filt = temaSel ? e.filter(r => (r.temas||[]).includes(temaSel)) : e;
+  const pRes = v => v==='Sim'?'ok':v==='Não'?'bad':v==='Parcialmente'?'warn':'';
+  const pQual = v => v==='Robusta'?'ok':v==='Frágil'?'bad':'warn';
+  const qual = count(e, r=>r.qualidade), st = count(e, r=>r.status);
+  return `
+  ${kpis([
+    ['Entrevistas', int(e.length), ''],
+    ['Resolveram totalmente', int(e.filter(r=>r.resolveu==='Sim').length), pct(e.filter(r=>r.resolveu==='Sim').length,e.length)],
+    ['Resolveram parcialmente', int(e.filter(r=>r.resolveu==='Parcialmente').length), ''],
+    ['Não resolveram', int(e.filter(r=>r.resolveu==='Não').length), ''],
+    ['Pediram atendimento humano', int(e.filter(r=>r.humano==='Sim').length), ''],
+    ['Precisaram ir ao presencial', int(e.filter(r=>r.presencial==='Sim').length), '']
+  ])}
+  <p class="note">Codificação qualitativa preliminar. Temas, etapas e resultados valem como hipóteses até a validação da pesquisadora (status atual: ${sortObj(st).map(([k,v])=>`${esc(k)} ${v}`).join(' · ')}).</p>
+  <div class="grid g2">
+    <div class="card"><h3>Temas recorrentes</h3><p class="sub">Entrevistas em que cada tema aparece.</p>${bars(tc.map(([k,v]) => ({l:k, v, s:pct(v,e.length), c:'var(--seal)'})))}</div>
+    <div class="card"><h3>A jornada nos relatos</h3><p class="sub">Como cada etapa aparece nas entrevistas.</p>
+      <div class="lk">${stack.map(s => { const n=e.length||1; return `<div class="lk-row"><div class="lab">${s.l}</div><div class="lk-bar">${s.c.pos?`<span class="s5" style="width:${s.c.pos/n*100}%">${s.c.pos}</span>`:''}${s.c.neg?`<span class="s1" style="width:${s.c.neg/n*100}%">${s.c.neg}</span>`:''}${s.c.se?`<span class="s3" style="width:${s.c.se/n*100}%">${s.c.se}</span>`:''}</div><div class="m"></div><div class="n">n=${e.length}</div></div>`; }).join('')}</div>
+      <div class="legend"><span><i class="s5"></i>Positiva / fácil</span><span><i class="s1"></i>Com fricção / negativa</span><span><i class="s3"></i>Sem evidência</span></div></div>
+  </div>
+  <div class="card"><h3>Matriz participante x tema</h3><p class="sub">Cada célula preenchida é um tema presente no relato. Linhas com muitas células indicam casos de jornada mais difícil.</p>
+    <div class="matrix"><table><thead><tr><th>Participante</th>${T.map(t=>`<th class="rot">${esc(t)}</th>`).join('')}<th class="rot">Total</th></tr></thead><tbody>
+    ${e.map(r => `<tr><td class="p">${esc(r.p)}</td>${T.map(t=>`<td><div class="cell ${(r.temas||[]).includes(t)?'on':''}" title="${esc(r.p)} · ${esc(t)}"></div></td>`).join('')}<td><b>${(r.temas||[]).length}</b></td></tr>`).join('')}
+    </tbody><tfoot><tr><td class="p">Total</td>${T.map(t=>`<td>${e.filter(r=>(r.temas||[]).includes(t)).length}</td>`).join('')}<td></td></tr></tfoot></table></div></div>
+  <div class="grid g2">
+    <div class="card"><h3>Qualidade da evidência</h3><p class="sub">Robustez do relato na transcrição.</p>${bars(sortObj(qual,['Robusta','Parcial','Frágil']).map(([k,v])=>({l:k,v,s:pct(v,e.length),c:k==='Robusta'?'var(--trust)':k==='Frágil'?'var(--alert)':'var(--seal)'})))}</div>
+    <div class="card"><h3>Serviços relatados</h3><p class="sub">Agrupamento por categoria.</p>${bars(sortObj(count(e,r=>r.categoria)).map(([k,v])=>({l:k,v,s:pct(v,e.length)})))}</div>
+  </div>
+  <div class="sec-title"><h3>Relatos</h3><span class="src">Identificados só pelo código do participante.</span></div>
+  <div class="chips" id="temaChips"><button class="chip" data-t="" aria-pressed="${!temaSel}">Todos (${e.length})</button>${tc.filter(([,v])=>v).map(([k,v])=>`<button class="chip" data-t="${esc(k)}" aria-pressed="${temaSel===k}">${esc(k)} (${v})</button>`).join('')}</div>
+  <div class="cases">${filt.map(r => `
+    <article class="case">
+      <div class="top"><div><div class="code">${esc(r.p)}</div><div class="svc">${esc(r.servico)}</div></div><div class="meta" style="justify-content:flex-end"><span class="pill ${pRes(r.resolveu)}">Resolveu: ${esc(r.resolveu||'–')}</span></div></div>
+      <div class="meta"><span class="pill">${esc(r.categoria||'–')}</span><span class="pill ${pQual(r.qualidade)}">Evidência ${esc((r.qualidade||'–').toLowerCase())}</span><span class="pill ${/^validado/i.test(r.status||'')?'ok':'warn'}">${esc(r.status||'–')}</span><span class="pill">${dBR(r.data)}</span></div>
+      ${r.sintese?`<div><div class="lbl">Síntese do caso</div><p class="t">${esc(r.sintese)}</p></div>`:''}
+      ${r.sinais?`<div><div class="lbl">Sinais a acompanhar</div><p class="t">${esc(r.sinais)}</p></div>`:''}
+      ${r.melhoria?`<div><div class="lbl">Melhoria sugerida</div><p class="t">${esc(r.melhoria)}</p></div>`:''}
+      ${(r.temas||[]).length?`<div class="tags">${r.temas.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
+    </article>`).join('') || '<p class="sub">Nenhum relato no filtro.</p>'}</div>`;
+}
+
+function vVozes(d){
+  const u = d.u;
+  const vazio = s => !s || /^(não|nao|nada|nenhum[a]?|n\/a|-)\.?$/i.test(s.trim());
+  const dif = u.filter(r => r.q9 && !vazio(r.q9));
+  const pares = u.filter(r => (r.q13 && !vazio(r.q13)) || (r.q14 && !vazio(r.q14)));
+  const melh = d.e.filter(r => r.melhoria && !/^sem evidência/i.test(r.melhoria));
+  return `
+  <p class="lead">Respostas abertas do questionário e melhorias sugeridas nas entrevistas, sem edição. Use para dar contexto aos números e para alimentar a priorização de melhorias.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Dificuldades relatadas (Q9)</h3><p class="sub">${dif.length} resposta(s) com conteúdo.</p>
+      <div class="quotes">${dif.map(r=>`<p class="quote">${esc(r.q9)}<small>Resposta #${esc(r.id)} · ${esc(r.servico||'')} · Q8 ${r.q8??'–'} · Q12 ${r.q12??'–'}</small></p>`).join('') || '<p class="sub">Nenhuma no período.</p>'}</div></div>
+    <div class="card"><h3>Melhorias sugeridas nas entrevistas</h3><p class="sub">${melh.length} relato(s) com sugestão. Itens marcados como "inferência" vêm da análise da equipe, não da fala direta.</p>
+      <div class="quotes">${melh.map(r=>`<p class="quote">${esc(r.melhoria)}<small>${esc(r.p)} · ${esc(r.categoria||'')}</small></p>`).join('') || '<p class="sub">Nenhuma no período.</p>'}</div></div>
+  </div>
+  <div class="card"><h3>Como gostariam que fosse e como não gostariam</h3><p class="sub">Q13 e Q14 lado a lado. O contraste ajuda a escrever princípios de design para o canal.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">${pares.map(r=>`<div class="pair"><div class="de"><span class="tag">Gostaria que fosse</span><p>${esc(r.q13||'–')}</p></div><div class="arrow">↔</div><div class="para"><span class="tag">Não gostaria que fosse</span><p>${esc(r.q14||'–')}</p></div></div>`).join('') || '<p class="sub">Nenhuma no período.</p>'}</div></div>`;
+}
+
+function vBase(){
+  const b = BASE;
+  const u = b.quanti.filter(r=>r.usou==='Sim');
+  const falt = ETAPAS.map(([k,,lab]) => [lab, u.filter(r=>!r[k]).length]).filter(([,v])=>v);
+  const chk = [
+    ['Usuários do questionário sem nota em alguma etapa', falt.length ? falt.map(([l,v])=>`${esc(l)}: ${v}`).join(' · ') : 'nenhum', falt.length?'warn':'ok'],
+    ['Usuários sem codificação da Q9', u.filter(r=>!r.dif).length, u.filter(r=>!r.dif).length?'warn':'ok'],
+    ['Triagem sem gênero ou faixa etária', b.triagem.filter(r=>!r.genero||!r.faixa).length, b.triagem.filter(r=>!r.genero||!r.faixa).length?'warn':'ok'],
+    ['Registros sem data', [...b.quanti,...b.triagem,...b.quali].filter(r=>!r.data).length, [...b.quanti,...b.triagem,...b.quali].filter(r=>!r.data).length?'bad':'ok'],
+    ['Entrevistas com gênero ou faixa "Não informado"', b.quali.filter(r=>/não informado/i.test((r.genero||'')+(r.faixa||''))).length, 'warn'],
+    ['Entrevistas com qualidade "Frágil"', b.quali.filter(r=>r.qualidade==='Frágil').length, b.quali.filter(r=>r.qualidade==='Frágil').length?'warn':'ok'],
+    ['Entrevistas pendentes de validação', b.quali.filter(r=>!/^validado/i.test(r.status||'')).length, b.quali.filter(r=>!/^validado/i.test(r.status||'')).length?'bad':'ok']
+  ];
+  return `
+  <div class="grid g2">
+    <div class="card"><h3>Base em uso</h3><p class="sub">${LOCAL ? 'Base carregada só nesta visualização. Ela some ao recarregar a página.' : `Base publicada no GitHub (${esc(REPO.owner)}/${esc(REPO.name)}): todos que abrem o painel veem a mesma versão.`}</p>
+      <div class="tbl"><table class="data"><tbody>
+        <tr><td>Arquivo</td><td>${esc(b.arquivo||'–')}</td></tr>
+        <tr><td>Atualizada em</td><td>${b.enviadoEm ? new Date(b.enviadoEm).toLocaleString('pt-BR') : '–'}</td></tr>
+        <tr><td>Questionário</td><td>${int(b.quanti.length)} respostas</td></tr>
+        <tr><td>Triagem</td><td>${int(b.triagem.length)} abordagens</td></tr>
+        <tr><td>Entrevistas</td><td>${int(b.quali.length)} relatos</td></tr>
+      </tbody></table></div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn seal" type="button" data-upload>Atualizar base</button></div>
+      <p class="sub" style="margin-top:12px;margin-bottom:0">Envie a planilha "Base e Painel - Pesquisa UX WhatsApp" com as abas QUANTI_JORNADA, TRIAGEM e QUALI_ENTREVISTAS. O painel lê só os dados brutos. As fórmulas da aba PAINEL não são usadas.</p></div>
+    <div class="card"><h3>Histórico de atualizações</h3><p class="sub">Últimos envios da planilha.</p>
+      ${HIST.length ? `<div class="tbl"><table class="data"><thead><tr><th>Quando</th><th>Arquivo</th><th class="r">Quanti</th><th class="r">Triagem</th><th class="r">Quali</th></tr></thead><tbody>${HIST.map(h=>`<tr><td>${new Date(h.em).toLocaleString('pt-BR')}</td><td>${esc(h.arquivo)}</td><td class="r">${h.quanti}</td><td class="r">${h.triagem}</td><td class="r">${h.quali}</td></tr>`).join('')}</tbody></table></div>` : '<p class="sub">Nenhum envio registrado pelo painel ainda.</p>'}</div>
+  </div>
+  <div class="card"><h3>Qualidade dos dados</h3><p class="sub">Verificações automáticas na base inteira, sem o filtro de datas.</p>
+    <div class="tbl"><table class="data"><tbody>${chk.map(([l,v,c])=>`<tr><td>${l}</td><td class="r"><span class="pill ${v===0||v==='nenhum'?'ok':c}">${v}</span></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="card"><h3>Método e leitura dos indicadores</h3>
+    <div class="grid g2" style="margin-top:10px">
+      <div class="sub" style="margin:0"><b>Escalas de 1 a 5.</b> São ordinais. O painel mostra a média como resumo descritivo, mas a leitura principal deve ser a distribuição das notas e o percentual de notas 4–5 (Jamieson, 2004; Sullivan; Artino, 2013). As barras divergentes seguem Robbins e Heiberger (2011).</div>
+      <div class="sub" style="margin:0"><b>Taxas por grupo.</b> Os intervalos de confiança de 95% usam o método de Wilson (1927), mais adequado que o intervalo normal para amostras pequenas e proporções próximas de 0 ou 1.</div>
+      <div class="sub" style="margin:0"><b>Entrevistas.</b> Os temas vêm de codificação dedutiva preliminar no estilo da análise temática (Braun; Clarke, 2006). Frequência de tema indica recorrência, não magnitude. Valide antes de usar como evidência.</div>
+      <div class="sub" style="margin:0"><b>Triangulação.</b> Questionário e entrevistas são comparados lado a lado para checar convergência, como recomendam os desenhos de métodos mistos (Creswell; Plano Clark, 2018). As bases não identificam pessoas, então não há cruzamento por indivíduo.</div>
+      <div class="sub" style="margin:0"><b>Privacidade.</b> O painel não carrega nome de arquivo, autorização de gravação nem indicação de transcrição. Relatos aparecem só pelo código do participante (Lei nº 13.709/2018, princípio da necessidade).</div>
+      <div class="sub" style="margin:0"><b>Insights automáticos.</b> Cada achado da visão geral é uma regra fixa sobre os dados (menor média, maior frequência, contagens). Nenhum texto é gerado por IA.</div>
+    </div>
+    <h3 style="margin-top:20px;font-size:15px">Referências</h3>
+    <ol class="refs">
+      <li>BRASIL. Lei nº 13.709, de 14 de agosto de 2018. Lei Geral de Proteção de Dados Pessoais (LGPD). Brasília, 2018.</li>
+      <li>BRAUN, V.; CLARKE, V. Using thematic analysis in psychology. <i>Qualitative Research in Psychology</i>, v. 3, n. 2, p. 77–101, 2006.</li>
+      <li>CRESWELL, J. W.; PLANO CLARK, V. L. <i>Designing and conducting mixed methods research</i>. 3. ed. Thousand Oaks: SAGE, 2018.</li>
+      <li>FEW, S. <i>Show me the numbers: designing tables and graphs to enlighten</i>. 2. ed. Burlingame: Analytics Press, 2012.</li>
+      <li>JAMIESON, S. Likert scales: how to (ab)use them. <i>Medical Education</i>, v. 38, n. 12, p. 1217–1218, 2004.</li>
+      <li>ROBBINS, N. B.; HEIBERGER, R. M. Plotting Likert and other rating scales. In: JOINT STATISTICAL MEETING, 2011. <i>Proceedings…</i> p. 1058–1066.</li>
+      <li>SULLIVAN, G. M.; ARTINO, A. R. Analyzing and interpreting data from Likert-type scales. <i>Journal of Graduate Medical Education</i>, v. 5, n. 4, p. 541–542, 2013.</li>
+      <li>WILSON, E. B. Probable inference, the law of succession, and statistical inference. <i>Journal of the American Statistical Association</i>, v. 22, n. 158, p. 209–212, 1927.</li>
+    </ol></div>`;
+}
+
+const TITULOS = {visao:'Visão geral', jornada:'Jornada do usuário no questionário', perfil:'Perfil dos abordados na triagem', relatos:'Entrevistas em profundidade', vozes:'Vozes dos usuários', base:'Base de dados e método'};
+let atual = 'visao';
+function render(){
+  $('#viewTitle').textContent = TITULOS[atual];
+  document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.v === atual));
+  document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + atual);
+  if (!BASE){
+    const el = $('#v-' + atual);
+    el.innerHTML = `<div class="card empty"><h3>${ESTADO==='carregando' ? 'Carregando a base…' : 'Nenhuma base publicada'}</h3><p>${ESTADO==='carregando' ? 'Buscando a versão mais recente da planilha no repositório.' : 'Clique em "Atualizar base" e envie a planilha "Base e Painel - Pesquisa UX WhatsApp" para montar os indicadores.'}</p>${ESTADO==='carregando'?'':'<p style="margin-top:16px"><button class="btn seal" type="button" data-upload>Atualizar base</button></p>'}</div>`;
+    return;
+  }
+  const d = D();
+  const views = {visao:()=>vVisao(d), jornada:()=>vJornada(d), perfil:()=>vPerfil(d), relatos:()=>vRelatos(d), vozes:()=>vVozes(d), base:()=>vBase()};
+  $('#v-' + atual).innerHTML = views[atual]();
+  const f = filtro.ini || filtro.fim ? ` · filtro: ${filtro.ini?dBR(filtro.ini):'início'} a ${filtro.fim?dBR(filtro.fim):'hoje'}` : '';
+  $('#srcLine').textContent = `Base: ${BASE.arquivo || 'planilha'} · atualizada em ${BASE.enviadoEm ? new Date(BASE.enviadoEm).toLocaleString('pt-BR') : '–'}${LOCAL?' · só nesta visualização':''}${f}`;
+  $('#sideFoot').textContent = `${int(BASE.quanti.length)} respostas · ${int(BASE.triagem.length)} triagens · ${int(BASE.quali.length)} entrevistas`;
+}
+
+/* ---------- navegação e filtros ---------- */
+$('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; atual = b.dataset.v; try{ history.replaceState(null,'','#'+atual); }catch(_){} render(); window.scrollTo(0,0); });
+const h = (location.hash||'').slice(1); if (TITULOS[h]) atual = h;
+window.addEventListener('hashchange', () => { const x = location.hash.slice(1); if (TITULOS[x] && x !== atual){ atual = x; render(); } });
+$('#dIni').addEventListener('change', e => { filtro.ini = e.target.value; render(); });
+$('#dFim').addEventListener('change', e => { filtro.fim = e.target.value; render(); });
+$('#btnLimpar').addEventListener('click', () => { filtro = {ini:'',fim:''}; $('#dIni').value=''; $('#dFim').value=''; render(); });
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-upload]')) abrirUpload();
+  const c = e.target.closest('#temaChips .chip'); if (c){ temaSel = c.dataset.t || null; render(); }
+});
+$('#btnUpload').addEventListener('click', abrirUpload);
+
+/* ---------- upload com senha ---------- */
+/* O token do GitHub fica no config.json do repositório, cifrado com AES-GCM.
+   A chave sai da senha da equipe (PBKDF2, 310 mil iterações). Sem a senha, o token não é lido. */
+let tentativas = 0, bloqueadoAte = 0, pendente = null, TOKEN = null;
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = buf => { let s=''; const a=new Uint8Array(buf); for (let i=0;i<a.length;i+=0x8000) s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function chave(senha, salt){ const k = await crypto.subtle.importKey('raw', enc.encode(senha), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'}, k, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+async function cifrar(texto, senha){ const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)); const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, await chave(senha, salt), enc.encode(texto)); return {v:1, kdf:'PBKDF2-SHA256-310000', salt:b64(salt), iv:b64(iv), ct:b64(ct)}; }
+async function decifrar(cfg, senha){ const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(cfg.iv)}, await chave(senha, unb64(cfg.salt)), unb64(cfg.ct)); return dec.decode(pt); }
+const utf8b64 = s => b64(enc.encode(s));
+
+async function gh(path, opt={}){
+  const r = await fetch(API + path, {...opt, headers:{'Accept':'application/vnd.github+json', ...(TOKEN?{'Authorization':'Bearer '+TOKEN}:{}), ...(opt.headers||{})}});
+  if (r.status === 404 && (!opt.method || opt.method === 'GET')) return null;
+  if (!r.ok){ const e = new Error('GitHub respondeu ' + r.status); e.status = r.status; throw e; }
+  return r.json();
+}
+async function gravar(path, texto, msg){
+  const atual = await gh(path + '?ref=main&t=' + Date.now());
+  return gh(path, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg, content: utf8b64(texto), branch:'main', ...(atual && atual.sha ? {sha: atual.sha} : {})})});
+}
+
+function fecharModal(){ $('#modal').hidden = true; pendente = null; }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') fecharModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) fecharModal(); });
+
+function abrirUpload(){
+  $('#modal').hidden = false; $('#mTitle').textContent = 'Atualizar a base';
+  if (TOKEN){ passoArquivo(); return; }
+  $('#mBody').innerHTML = `<form id="fSenha" style="display:flex;flex-direction:column;gap:12px">
+    <p class="sub" style="margin:0">Digite a senha da equipe para liberar o envio da planilha.</p>
+    <label for="senha" class="kicker">Senha</label>
+    <input type="password" id="senha" autocomplete="off" required>
+    <p class="msg" id="mMsg"></p>
+    <div class="row"><button type="button" class="btn" id="mCancel">Cancelar</button><button class="btn primary" type="submit" id="mGo">Liberar envio</button></div></form>`;
+  $('#mCancel').onclick = fecharModal;
+  setTimeout(() => $('#senha')?.focus(), 30);
+  $('#fSenha').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const msg = $('#mMsg'), senha = $('#senha').value;
+    if (Date.now() < bloqueadoAte){ msg.className='msg err'; msg.textContent = `Muitas tentativas. Aguarde ${Math.ceil((bloqueadoAte-Date.now())/1000)} segundos.`; return; }
+    if (!CONFIG){ passoConfigurar(senha); return; }
+    $('#mGo').disabled = true; msg.className='msg'; msg.textContent = 'Conferindo…';
+    try { TOKEN = await decifrar(CONFIG, senha); tentativas = 0; passoArquivo(); }
+    catch(_){ $('#mGo').disabled = false; tentativas++; if (tentativas >= 5){ bloqueadoAte = Date.now() + 60000; tentativas = 0; } msg.className='msg err'; msg.textContent = 'Senha incorreta. Confira e tente de novo.'; $('#senha').select(); }
+  });
+}
+/* Primeira configuração: só aparece enquanto o repositório não tem config.json. */
+function passoConfigurar(senha){
+  $('#mTitle').textContent = 'Configurar o envio para o GitHub';
+  $('#mBody').innerHTML = `<form id="fTok" style="display:flex;flex-direction:column;gap:12px">
+    <p class="sub" style="margin:0">Configuração feita uma única vez pelo responsável pelo repositório. Cole um token de acesso refinado (fine-grained) do GitHub com acesso só ao repositório <b>${esc(REPO.owner)}/${esc(REPO.name)}</b> e permissão <b>Contents: Read and write</b>. O painel guarda o token cifrado com a senha digitada. Depois disso, a equipe só precisa da senha.</p>
+    <label for="tok" class="kicker">Token do GitHub</label>
+    <input type="password" id="tok" autocomplete="off" required style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:9px 10px">
+    <p class="msg" id="mMsg"></p>
+    <div class="row"><button type="button" class="btn" id="mCancel">Cancelar</button><button class="btn primary" type="submit" id="mGo">Salvar configuração</button></div></form>`;
+  $('#mCancel').onclick = fecharModal;
+  $('#fTok').addEventListener('submit', async ev => {
+    ev.preventDefault(); const msg = $('#mMsg'); $('#mGo').disabled = true; msg.className='msg'; msg.textContent = 'Testando o token…';
+    TOKEN = $('#tok').value.trim();
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO.owner}/${REPO.name}`, {headers:{'Authorization':'Bearer '+TOKEN,'Accept':'application/vnd.github+json'}});
+      if (!r.ok) throw new Error('O GitHub não aceitou o token (' + r.status + '). Confira se ele tem acesso a este repositório.');
+      const j = await r.json(); if (!j.permissions || !j.permissions.push) throw new Error('O token não tem permissão de escrita (Contents: Read and write).');
+      CONFIG = await cifrar(TOKEN, senha);
+      await gravar('config.json', JSON.stringify(CONFIG, null, 1), 'Configura envio cifrado do painel');
+      msg.className='msg ok'; msg.textContent = 'Configuração salva.'; setTimeout(passoArquivo, 600);
+    } catch(err){ TOKEN = null; $('#mGo').disabled = false; msg.className='msg err'; msg.textContent = err.message; }
+  });
+}
+function passoArquivo(){
+  $('#mTitle').textContent = 'Atualizar a base';
+  $('#mBody').innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
+    <p class="sub" style="margin:0">Envio liberado. Selecione a planilha atualizada (.xlsx).</p>
+    <label class="drop" id="drop" for="arq">Arraste a planilha aqui ou clique para escolher<input type="file" id="arq" accept=".xlsx,.xlsm,.xls" hidden></label>
+    <p class="msg" id="mMsg"></p>
+    <div class="row"><button type="button" class="btn" id="mCancel">Cancelar</button></div></div>`;
+  $('#mCancel').onclick = fecharModal;
+  const drop = $('#drop');
+  ['dragover','dragenter'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) lerArquivo(f); });
+  $('#arq').addEventListener('change', e => { const f = e.target.files[0]; if (f) lerArquivo(f); });
+}
+function lerArquivo(f){
+  const msg = $('#mMsg'); msg.className='msg'; msg.textContent = 'Lendo a planilha…';
+  if (typeof XLSX === 'undefined'){ msg.className='msg err'; msg.textContent='O leitor de planilhas não carregou. Recarregue a página e tente de novo.'; return; }
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const wb = XLSX.read(new Uint8Array(fr.result), {type:'array'});
+      const novo = parseBase(XLSX, wb); novo.arquivo = f.name; novo.enviadoEm = new Date().toISOString();
+      if (!novo.quanti.length && !novo.triagem.length && !novo.quali.length) throw new Error('A planilha não tem nenhum registro preenchido.');
+      pendente = novo; passoConfirmar();
+    } catch(err){ msg.className='msg err'; msg.textContent = err.message || 'Não consegui ler a planilha.'; }
+  };
+  fr.onerror = () => { msg.className='msg err'; msg.textContent='Não consegui abrir o arquivo.'; };
+  fr.readAsArrayBuffer(f);
+}
+function passoConfirmar(){
+  const n = pendente, a = BASE;
+  const linha = (l, k) => { const x = n[k].length, y = a ? a[k].length : null; const dif = y===null ? '' : x-y; return `<tr><td>${l}</td><td class="r">${y===null?'–':int(y)}</td><td class="r"><b>${int(x)}</b></td><td class="r">${dif===''?'':(dif>0?'+':'')+dif}</td></tr>`; };
+  $('#mTitle').textContent = 'Conferir antes de publicar';
+  $('#mBody').innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
+    <p class="sub" style="margin:0">Arquivo: <b>${esc(n.arquivo)}</b></p>
+    <div class="tbl"><table class="data"><thead><tr><th>Aba</th><th class="r">Atual</th><th class="r">Nova</th><th class="r">Diferença</th></tr></thead><tbody>
+    ${linha('Questionário (QUANTI_JORNADA)','quanti')}${linha('Triagem (TRIAGEM)','triagem')}${linha('Entrevistas (QUALI_ENTREVISTAS)','quali')}</tbody></table></div>
+    ${a && (n.quanti.length < a.quanti.length || n.triagem.length < a.triagem.length || n.quali.length < a.quali.length) ? '<p class="note">A nova planilha tem menos registros que a base atual em pelo menos uma aba. Confira se é a versão mais recente.</p>' : ''}
+    <p class="msg" id="mMsg">Ao publicar, a nova base é gravada no GitHub e substitui a atual para todos que acessam o painel.</p>
+    <div class="row"><button type="button" class="btn" id="mLocal">Só ver nesta tela</button><button type="button" class="btn primary" id="mOk">Publicar no GitHub</button></div></div>`;
+  $('#mLocal').onclick = () => { BASE = pendente; LOCAL = true; fecharModal(); render(); toast('Base aplicada só nesta visualização.'); };
+  $('#mOk').onclick = publicar;
+}
+async function publicar(){
+  const btn = $('#mOk'), msg = $('#mMsg'); btn.disabled = true; msg.className='msg'; msg.textContent = 'Gravando no GitHub…';
+  const n = pendente;
+  try {
+    await gravar('data.json', JSON.stringify(n), `Atualiza base: ${n.arquivo} (${n.quanti.length} quanti, ${n.triagem.length} triagem, ${n.quali.length} quali)`);
+    const reg = {em:n.enviadoEm, arquivo:n.arquivo, quanti:n.quanti.length, triagem:n.triagem.length, quali:n.quali.length};
+    HIST = [reg, ...HIST].slice(0, 50);
+    try { await gravar('historico.json', JSON.stringify(HIST, null, 1), 'Registra atualização da base'); } catch(_){}
+    BASE = n; LOCAL = false; fecharModal(); render(); toast('Base publicada no GitHub. O endereço público atualiza em 1 a 2 minutos.');
+  } catch(err){
+    btn.disabled = false; msg.className='msg err';
+    msg.textContent = err.status === 401 || err.status === 403 ? 'O GitHub recusou o envio. O token pode ter expirado: peça ao responsável para gerar um novo e apagar o config.json do repositório.' : err.status === 409 ? 'Outra pessoa atualizou a base agora. Feche, recarregue a página e envie de novo.' : 'Não consegui gravar no GitHub (' + (err.message || 'erro') + '). Tente de novo em instantes.';
+  }
+}
+
+/* ---------- carga da base publicada ---------- */
+render();
+(async () => {
+  const pega = async f => { try { const r = await fetch(f + '?t=' + Date.now(), {cache:'no-store'}); return r.ok ? await r.json() : null; } catch(_){ return null; } };
+  const [base, hist, cfg] = await Promise.all([pega('data.json'), pega('historico.json'), pega('config.json')]);
+  if (base && Array.isArray(base.quanti)) BASE = base;
+  if (Array.isArray(hist)) HIST = hist;
+  if (cfg && cfg.ct) CONFIG = cfg;
+  ESTADO = 'pronto'; render();
+})();
+})();
+</script>
+</body>
+</html>
